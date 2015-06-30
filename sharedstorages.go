@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015 1&1 Internet AG, http://1und1.de . All rights reserved. Licensed under the Apache v2 License.
+ */
+
 package main
 
 import (
@@ -5,9 +9,21 @@ import (
 	"fmt"
 )
 
+var sharedstorageFunctions = string2function{
+	"list": handlerFunction{
+		Arguments:   "",
+		Description: "List all available shared storages.",
+		Func:        sharedstoragesList,
+	},
+	"info": handlerFunction{
+		Arguments:   "ID",
+		Description: "Shows information about the selected shared storages.",
+		Func:        sharedstoragesInfo,
+	},
+}
+
 func sharedstoragesList() {
-	storages, err := api.GetSharedStorages()
-	fmt.Printf("%v\n", err)
+	storages, _ := api.GetSharedStorages()
 	fmt.Printf("ID                               | Name\n")
 	fmt.Printf("--------------------------------------------------------------------------------\n")
 	for _, policy := range storages {

@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015 1&1 Internet AG, http://1und1.de . All rights reserved. Licensed under the Apache v2 License.
+ */
+
 package main
 
 import (
@@ -5,9 +9,25 @@ import (
 	"fmt"
 )
 
+const applianceError = 4
+
+var applianceFunctions = string2function{
+	"list": handlerFunction{
+		Arguments:   "",
+		Description: "List all available appliances.",
+		Func:        appliancesList,
+	},
+	"info": handlerFunction{
+		Arguments:   "ID",
+		Description: "Shows information about the selected appliance.",
+		Func:        applianceInfo,
+	},
+}
+
 func applianceInfo() {
 	id := flag.Arg(2)
-	server, _ := api.GetServerAppliance(id)
+	server, err := api.GetServerAppliance(id)
+	printErrorAndExit(err, applianceError)
 	printObject(server)
 }
 

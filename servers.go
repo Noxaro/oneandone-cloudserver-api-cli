@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015 1&1 Internet AG, http://1und1.de . All rights reserved. Licensed under the Apache v2 License.
+ */
+
 package main
 
 import (
@@ -5,6 +9,76 @@ import (
 	"fmt"
 	oao "github.com/jlusiardi/oneandone-cloudserver-api"
 )
+
+const serversError = 5
+
+var serverFunctions = string2function{
+	"list": handlerFunction{
+		Arguments:   "",
+		Description: "List the available servers.",
+		Func:        listServers,
+	},
+	"listSizes": handlerFunction{
+		Arguments:   "",
+		Description: "Show the available sizes for fixed instances.",
+		Func:        listInstanceSizes,
+	},
+	"listIps": handlerFunction{
+		Arguments:   "ID",
+		Description: "Shows the list of all IPs of the selected server.",
+		Func:        listServersIps,
+	},
+	"info": handlerFunction{
+		Arguments:   "ID",
+		Description: "Shows information about the selected server.",
+		Func:        infoServer,
+	},
+	"delete": handlerFunction{
+		Arguments:   "ID",
+		Description: "Deletes the selected server.",
+		Func:        deleteServer,
+	},
+	"reboot": handlerFunction{
+		Arguments:   "ID",
+		Description: "Reboots the selected server.",
+		Func:        rebootServer,
+	},
+	"shutdown": handlerFunction{
+		Arguments:   "ID",
+		Description: "Shutdown the selected server.",
+		Func:        shutdownServer,
+	},
+	"start": handlerFunction{
+		Arguments:   "ID",
+		Description: "Start the selected server.",
+		Func:        startServer,
+	},
+	"create": handlerFunction{
+		Arguments:   "NAME APPLIANCEID",
+		Description: "Create a new server with given name and based on the given appliance.",
+		Func:        createServer,
+	},
+	"rename": handlerFunction{
+		Arguments:   "NAME DESCRIPTION",
+		Description: "Update the name and description of a server.",
+		Func:        renameServer,
+	},
+}
+
+func renameServer() {
+	id := flag.Arg(2)
+	name := flag.Arg(3)
+	desc := flag.Arg(4)
+	server, err := api.GetServer(id)
+	printErrorAndExit(err, serversError)
+	data := oao.ServerRenameData{
+		Name:        name,
+		Description: desc,
+	}
+	server, err = server.RenameServer(data)
+	printErrorAndExit(err, serversError)
+	printObject(server)
+}
 
 func listServers() {
 	servers, _ := api.GetServers()
@@ -25,13 +99,11 @@ func listInstanceSizes() {
 	}
 	fmt.Printf("--------------------------------------------------------------------------------\n")
 }
+
 func listServersIps() {
 	id := flag.Arg(2)
 	server, err := api.GetServer(id)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	}
+	printErrorAndExit(err, serversError)
 	fmt.Printf("ID                               | IP\n")
 	fmt.Printf("--------------------------------------------------------------------------------\n")
 	for _, ip := range server.Ips {
@@ -43,74 +115,51 @@ func listServersIps() {
 func infoServer() {
 	id := flag.Arg(2)
 	server, err := api.GetServer(id)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	}
+	printErrorAndExit(err, serversError)
 	printObject(server)
 }
 
 func deleteServer() {
 	id := flag.Arg(2)
 	server, err := api.GetServer(id)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	}
+	printErrorAndExit(err, serversError)
 	server, err = server.Delete()
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	}
+	printErrorAndExit(err, serversError)
 	printObject(server)
 }
 
 func rebootServer() {
 	id := flag.Arg(2)
 	server, err := api.GetServer(id)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	}
+	printErrorAndExit(err, serversError)
 	mode := flag.Arg(3)
 	server, err = server.Reboot(mode == "force")
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	}
+	printErrorAndExit(err, serversError)
 	printObject(server)
 }
 
 func shutdownServer() {
 	id := flag.Arg(2)
 	server, err := api.GetServer(id)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	}
+	printErrorAndExit(err, serversError)
 	mode := flag.Arg(3)
 	server, err = server.Shutdown(mode == "force")
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	}
+	printErrorAndExit(err, serversError)
 	api.WaitForServerState(id, "POWERED_OFF")
+	server, err = api.GetServer(id)
+	printErrorAndExit(err, serversError)
 	printObject(server)
 }
 
 func startServer() {
 	id := flag.Arg(2)
 	server, err := api.GetServer(id)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	}
+	printErrorAndExit(err, serversError)
 	server, err = server.Start()
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	}
+	printErrorAndExit(err, serversError)
 	api.WaitForServerState(id, "POWERED_ON")
+	server, err = api.GetServer(id)
+	printErrorAndExit(err, serversError)
 	printObject(server)
 }
 
@@ -133,10 +182,7 @@ func createServer() {
 		},
 	}
 	server, err := api.CreateServer(req)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	}
+	printErrorAndExit(err, serversError)
 	printObject(server)
 
 }
